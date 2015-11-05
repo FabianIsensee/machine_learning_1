@@ -37,7 +37,7 @@ def compute_qda(trainingy, trainingx):
     class_correspondence = np.unique(trainingy)
     for c in np.unique(trainingy):
         my_mean = [np.mean(trainingx[trainingy == c, :][:, i]) for i in range(trainingx.shape[1])]
-        mean_vec += [my_mean]
+        mean_vec += [np.array(my_mean)]
         my_data = trainingx[trainingy == c, :]
 
         my_data_nomean = np.array([my_data[:, i] - my_mean[i] for i in range(my_data.shape[1])]).transpose()
@@ -52,11 +52,14 @@ def perform_qda(mu, cov, priors, testx):
     assert len(cov) == len(priors)
     pred = np.ones(testx.shape[0])*999
     inv_cov = [np.linalg.inv(i) for i in cov]
+    b_k_all = []
+    for j in xrange(n_classes):
+        b_k_all.append(np.log(np.linalg.det(2. * np.pi * cov[j])) - 2. * np.log(priors[j]))
 
     for i in xrange(pred.shape[0]):
         scores = []
         for j in xrange(n_classes):
-            b_k = np.log(np.linalg.det(2. * np.pi * cov[j])) - 2. * np.log(priors[j])
+            b_k = b_k_all[j]
             x_prime = testx[i]
             this_score = b_k + np.dot(np.dot((x_prime - mu[j]).transpose(), inv_cov[j]), (x_prime - mu[j]))
             scores += [this_score]
@@ -64,6 +67,31 @@ def perform_qda(mu, cov, priors, testx):
     return pred
 
 
+def compute_lda(trainingy, trainingx):
+    mean_vec, cov_matrices, priors = compute_qda(trainingy, trainingx)
+    n_instances = trainingx.shape[0]
+    s_w = np.zeros(cov_matrices[0].shape)
+    for i in zip(np.unique(trainingy), cov_matrices):
+        s_w += i[1] * float(np.sum(trainingy == i[0])) / float(n_instances)
+    s_w_all = [s_w] * len(np.unique(trainingy))
+    return mean_vec, s_w_all, priors
+
+def predict_lda(mu, cov, priors, testx):
+    weight=[]
+    bk_all=[]
+    s_w_inv=np.linalg.inv(cov[0])
+    for i in range(len(mu)):
+        bk=np.log(np.linalg.det(2. * np.pi * cov[i])) - 2. * np.log(priors[i])
+        bk_prime=bk+np.dot(np.dot(mu[i],s_w_inv),mu[i].transpose())
+        bk_all.append(-bk_prime/2.)
+        weight.append(np.dot(mu[i],s_w_inv))
+    tmp=np.zeros(testx.shape[0])
+    for j in xrange(testx.shape[0]):
+        scores=[]
+        for i in range(len(mu)):
+            scores.append(np.dot(weight[i],testx[j].transpose())+bk_all[i])
+        tmp[j]=np.argmax(scores)
+    return tmp
 
 if __name__ == "__main__":
     # load data
@@ -105,7 +133,6 @@ if __name__ == "__main__":
 
     # predict with qda
     pred_qda = perform_qda(mu, cov, prior, X_test)
-    IPython.embed()
     class_correspondence = np.unique(Y_train)
     pred_qda = class_correspondence[pred_qda.astype("int")]
     pred_qda_accur = np.sum(Y_test==pred_qda)/float(len(Y_test))
@@ -138,6 +165,29 @@ if __name__ == "__main__":
     plt.scatter(visualize_train_x[:, 0][pred_visualize_data == 7], visualize_train_x[:, 1][pred_visualize_data == 7], marker='o', c='b', s=size)
     plt.show() # looks good
 
+    # lda
+    mu_lda, cov_lda, prior_lda = compute_lda(Y_train, X_train)
 
+    # predict with lda
+    pred_lda = predict_lda(mu_lda, cov_lda, prior_lda, X_test)
+    class_correspondence = np.unique(Y_train)
+    pred_lda = class_correspondence[pred_lda.astype("int")]
+    pred_lda_accur = np.sum(Y_test==pred_lda)/float(len(Y_test))
+
+    print "LDA: %f accuracy on test set" % pred_lda_accur
+
+    # predict visualize_train_x
+    pred_visualize_data_lda = predict_lda(mu_lda, cov_lda, prior_lda, visualize_train_x)
+    pred_visualize_data_lda = class_correspondence[pred_visualize_data_lda.astype("int")]
+
+    plt.title('Scatter Plot - LDA decision boundary')
+    plt.xlabel('X1')
+    plt.ylabel('X2')
+
+    size = 12
+
+    plt.scatter(visualize_train_x[:, 0][pred_visualize_data_lda == 1], visualize_train_x[:, 1][pred_visualize_data_lda == 1], marker='x', c='r', s=size)
+    plt.scatter(visualize_train_x[:, 0][pred_visualize_data_lda == 7], visualize_train_x[:, 1][pred_visualize_data_lda == 7], marker='o', c='b', s=size)
+    plt.show() # looks good
 
 
