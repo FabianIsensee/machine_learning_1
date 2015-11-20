@@ -5,12 +5,12 @@ import IPython
 
 # uses variances to select features. we select the features where the total variance is larger than the variance within
 # each class.
-def dr(x, y):
+def dr(x, y, n=2):
     total_var = np.var(x, axis=0)
     class_var = np.zeros(total_var.shape)
     for c in np.unique(y):
         class_var += np.var(x[y == c, :], axis = 0) * np.sum(y == c) / float(len(y))
-    return x[:, np.argsort(total_var - class_var)[::-1][:2]]
+    return x[:, np.argsort(total_var - class_var)[::-1][:n]]
 
 def nm(trainingx, trainingy, testx):
     mean_vec = []
