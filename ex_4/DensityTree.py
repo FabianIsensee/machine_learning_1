@@ -150,11 +150,10 @@ class DensityEstimationTree(object):
                     node_stack.append(new_node)
 
     def get_density(self, x):
-        if len(x.shape) == 0:
+        if len(x.shape) == 1:
             x = x.reshape((1, -1))
 
         densities = np.zeros(x.shape[0])
-
         for i in xrange(x.shape[0]):
             densities[i] = self._root_node.find_density(x[i, :])
 
@@ -162,7 +161,34 @@ class DensityEstimationTree(object):
 
 class DensityEstimationTreeClassifier(object):
     def __init__(self):
-        raise NotImplementedError
+        self._classes = None
+        self._class_trees = None
+        self._priors = []
+
+    def train(self, x, y, min_instances_per_node=10, max_depth=10):
+        self._classes = np.unique(y)
+        self._priors = np.zeros(len(self._classes))
+        self._class_trees = []
+
+        for k, current_class in enumerate(self._classes):
+            indexes_of_class = np.where(y == current_class)[0]
+            self._priors[k] = float(len(indexes_of_class)) / float(x.shape[1])
+            this_tree = DensityEstimationTree()
+            this_tree.train(x[indexes_of_class, :], min_instances_per_node, max_depth)
+            self._class_trees += [this_tree]
+
+    def predict(self, x):
+        if len(x.shape) == 1:
+            x = x.reshape((1, -1))
+
+        pred_y = np.zeros(x.shape[0])
+
+        for i in xrange(x.shape[0]):
+            scores = []
+            for k in xrange(len(self._classes)):
+                scores += [self._class_trees[k].get_density(x[i, :]) * self._priors[k]]
+            pred_y[i] = self._classes[np.argmax(scores)]
+        return pred_y
 
 
 if __name__ == "__main__":
@@ -176,3 +202,10 @@ if __name__ == "__main__":
     det.train(train_X)
 
     print det.get_density(test_X)
+    print "\n"
+
+    dtc = DensityEstimationTreeClassifier()
+    dtc.train(train_X, train_Y, 10, 10)
+    pred_Y = dtc.predict(test_X)
+    accur = float(np.sum(pred_Y == test_Y)) / float(len(test_Y))
+    print "accuracy on test: %f" % accur
