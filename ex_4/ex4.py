@@ -1,14 +1,11 @@
-__author__ = "Fabian"
-import sys
-sys.path.append("../ex_2")
 import numpy as np
 import h5py
 import feature_selection
 from sklearn import cross_validation
 import matplotlib.pyplot as plt
 import IPython
-from copy import deepcopy
 from random import sample
+__author__ = "Fabian"
 
 
 class NaiveBayes(object):
@@ -21,13 +18,13 @@ class NaiveBayes(object):
         self._classes = None
 
     def __find_nbins_auto(self):
-        '''
+        """
         This function determines the best number of bins for each feature by using cross-validation. The error is
         calculated as the absolute difference between the density estimates of the train and test histograms
 
         :return: list (length n_features) of optimal number of bins
-        '''
-        candidate_bins = [2, 5, 10, 20, 50, 100, 200, 500, 1000] # should be sufficient for this exercise
+        """
+        candidate_bins = [2, 5, 10, 20, 50, 100, 200, 500, 1000]  # should be sufficient for this exercise
         k_fold = 3
         cross_val = cross_validation.KFold(self._X.shape[0], n_folds=k_fold, shuffle=True)
         n_bins_optimal = []
@@ -45,7 +42,8 @@ class NaiveBayes(object):
                     # results in approx. the same histograms
                     bin_width = hist_train[1][1] - hist_train[1][0]
                     for m in xrange(nbins):
-                        error += (hist_train[0][m] / float(len(kf[0])) - hist_test[0][m] / float(len(kf[1])))**2 / bin_width
+                        error += (hist_train[0][m] / float(len(kf[0])) -
+                                  hist_test[0][m] / float(len(kf[1])))**2 / bin_width
                 error /= float(k_fold)
                 print nbins, error
                 if error < best_error:
@@ -62,7 +60,7 @@ class NaiveBayes(object):
             n_bins_optimal += [np.max((2, 3.5 * np.std(self._X[:, j]) / self._X.shape[0]**(1/3)))]
         return n_bins_optimal
 
-    def train(self, x, y, n_bins = None):
+    def train(self, x, y, n_bins=None):
         self._X = x
         self._Y = y
 
@@ -115,8 +113,10 @@ class NaiveBayes(object):
                 for feat_id in xrange(self._n_features):
                     my_value = x[j, feat_id]
 
-                    # min is necessary because sometimes a value can occur that is larger than the largest value in the training dataset
-                    bin_id = np.min((np.where(class_histograms[feat_id][1] <= my_value)[0][-1], len(class_histograms[feat_id][0]) - 1))
+                    # min is necessary because sometimes a value can occur that is larger than the
+                    # largest value in the training dataset
+                    bin_id = np.min((np.where(class_histograms[feat_id][1] <= my_value)[0][-1],
+                                     len(class_histograms[feat_id][0]) - 1))
                     proba += np.log(class_histograms[feat_id][0][bin_id])
 
                 if proba > best_result:
@@ -125,6 +125,7 @@ class NaiveBayes(object):
 
             y_predicted[j] = best_class
         return y_predicted
+
 
 class GenerativeModel(NaiveBayes):
     def generate_instance_of_class(self, class_id, n):
@@ -141,8 +142,9 @@ class GenerativeModel(NaiveBayes):
             new_data[:, j] = random_from_cdf
         return new_data
 
-class Node():
-    def __init__(self, data, n_instances_total, depth, domain = None):
+
+class Node(object):
+    def __init__(self, data, n_instances_total, depth, domain=None):
         self.data = data
         self._splitfeatureid = None
         self._threshold = None
@@ -160,7 +162,7 @@ class Node():
 
     @staticmethod
     def get_domain_from_data(data):
-        domain = np.array([np.min(data, axis = 0), np.max(data, axis = 0)]).transpose()
+        domain = np.array([np.min(data, axis=0), np.max(data, axis=0)]).transpose()
         return domain
 
     @staticmethod
@@ -168,10 +170,12 @@ class Node():
         edge_lengths = np.diff(domain, axis=1)
         return np.prod(edge_lengths)
 
-    def _find_splitpos_middle(self, left_value, right_value):
+    @staticmethod
+    def _find_splitpos_middle(left_value, right_value):
         return float(left_value + right_value) / 2.
 
-    def _find_splitpos_random(self, left_value, right_value):
+    @staticmethod
+    def _find_splitpos_random(left_value, right_value):
         randn = np.random.uniform()
         return float(left_value) + randn * float(right_value - left_value)
 
@@ -179,7 +183,7 @@ class Node():
         self.density = self._compute_density()
         self.isLeaf = True
 
-    def split(self, maxdepth=15, mininstances=10, random_features = False):
+    def split(self, maxdepth=15, mininstances=10, random_features=False):
         if self.isLeaf:
             return None
 
@@ -202,16 +206,21 @@ class Node():
             while left_pos < (len(sorted_indices) - 1):
 
                 while (left_pos < len(sorted_indices) - 1) and \
-                        (self.data[sorted_indices[left_pos], feature] == self.data[sorted_indices[left_pos + 1], feature]):
+                        (self.data[sorted_indices[left_pos], feature] ==
+                         self.data[sorted_indices[left_pos + 1], feature]):
                     left_pos += 1
+
+                left_value = self.data[sorted_indices[left_pos], feature]
 
                 right_pos = left_pos + 1
 
                 if right_pos >= len(sorted_indices):
                     continue
 
-                splitpos = self.splitpos_functor(self.data[sorted_indices[left_pos], feature],
-                                                 self.data[sorted_indices[right_pos], feature])
+                right_value = self.data[sorted_indices[right_pos], feature]
+
+                splitpos = self.splitpos_functor(left_value,
+                                                 right_value)
                 domain_left = np.array(self.domain)
                 domain_right = np.array(self.domain)
                 domain_left[feature, 1] = splitpos
@@ -243,11 +252,17 @@ class Node():
         print "child1 size: ", len(best_split_ids_left), "\t child2 size: ", len(best_split_ids_right)
         print "child nodes depth:", self._depth+1
 
-        child1 = Node(self.data[best_split_ids_left, :], self._n_instances_total, self._depth + 1, domain=np.array(best_domain_left))
+        child1 = Node(self.data[best_split_ids_left, :],
+                      self._n_instances_total,
+                      self._depth + 1,
+                      domain=np.array(best_domain_left))
         if (child1.data.shape[0] < mininstances) | (child1._depth > maxdepth):
             child1._make_leaf_node()
 
-        child2 = Node(self.data[best_split_ids_right, :], self._n_instances_total, self._depth + 1, domain=np.array(best_domain_right))
+        child2 = Node(self.data[best_split_ids_right, :],
+                      self._n_instances_total,
+                      self._depth + 1,
+                      domain=np.array(best_domain_right))
         if (child2.data.shape[0] < mininstances) | (child2._depth > maxdepth):
             child2._make_leaf_node()
 
@@ -276,26 +291,27 @@ class Node():
             else:
                 return self._child2.find_likelihood(data_vec)
 
+
 class DensityTree(object):
     def __init__(self):
-        self._data = None
         self._priors = None
         self._n_features = None
         self._root_node = None
 
-    def train_tree(self, data, max_depth=15, min_instances_per_node=10):
-        self._data = data
+    def train_tree(self, data, max_depth=15, min_instances_per_node=10, random_features=False):
         node_stack = list()
-        self._root_node = Node(self._data, self._data.shape[0], 0)
+        self._root_node = Node(data, data.shape[0], 0)
         node_stack.append(self._root_node)
         while len(node_stack) > 0:
             this_node = node_stack.pop()
-            split_res = this_node.split(max_depth, min_instances_per_node)
+            split_res = this_node.split(max_depth, min_instances_per_node, random_features=random_features)
             if split_res is not None:
                 for node in split_res:
                     node_stack.append(node)
 
     def find_likelihood(self, data):
+        if len(data.shape) == 1:
+            data = data.reshape((1, -1))
         assert self._root_node is not None, "Train the density tree first"
         likelihoods = np.ones(data.shape[0]) * -1.
         for k in xrange(data.shape[0]):
@@ -309,17 +325,20 @@ class DensityTreeClassifier(object):
         self.classes = None
         self._prior = None
 
-    def train(self, x, y, max_depth=15, min_instances_per_node=10):
+    def train(self, x, y, max_depth=15, min_instances_per_node=10, random_features=False):
         self.classes = np.unique(y)
         self._class_trees = []
         self._prior = np.zeros(len(self.classes))
 
         for i, class_id in enumerate(self.classes):
-            dt = DensityTree()
-            idx = np.where(y==class_id)[0]
+            density_tree = DensityTree()
+            idx = np.where(y == class_id)[0]
             self._prior[i] = float(len(idx)) / float(x.shape[0])
-            dt.train_tree(x[idx, :], max_depth=max_depth, min_instances_per_node=min_instances_per_node)
-            self._class_trees += [dt]
+            density_tree.train_tree(x[idx, :],
+                                    max_depth=max_depth,
+                                    min_instances_per_node=min_instances_per_node,
+                                    random_features=random_features)
+            self._class_trees += [density_tree]
 
     def predict(self, x):
         pred_y = np.ones(x.shape[0]) * -1
@@ -384,8 +403,8 @@ if __name__ == "__main__":
     test_Y = test_Y[(test_Y == 3) | (test_Y == 8)]
 
     # feature selectionr
-    selection_method = "JMI"
-    dr_train_X, selected_ids = dr(train_X, train_Y.astype("int"), 2, method=selection_method)
+    selection_method = "mRMR"
+    dr_train_X, selected_ids = dr(train_X, train_Y.astype("int"), 1, method=selection_method)
     dr_test_X = test_X[:, selected_ids]
 
     # plot the distribution in feature space to check if feature selection worked
@@ -411,12 +430,11 @@ if __name__ == "__main__":
     # using a lot of fantasy you can actually make out the three's
     # density tree
 
-    dt = DensityTree()
-    dt.train_tree(dr_train_X[:1000], max_depth=15)
+    # dt = DensityTree()
+    # dt.train_tree(dr_train_X, max_depth=15, min_instances_per_node=100)
 
     dtc = DensityTreeClassifier()
-    dtc.train(train_X[:10000], train_Y[:10000], max_depth=999, min_instances_per_node=1000)
-    pred_Y = dtc.predict(train_X[:10000])
-    accur = np.sum(pred_Y == train_Y[:10000]) / float(len(train_Y[:10000]))
+    dtc.train(dr_train_X, train_Y, max_depth=999, min_instances_per_node=1000)
+    pred_Y = dtc.predict(dr_test_X)
+    accur = np.sum(pred_Y == test_Y) / float(len(test_Y))
     print "Accuracy with Density Tree: %f" % accur
-
