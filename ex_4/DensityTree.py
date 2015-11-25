@@ -3,6 +3,15 @@ import IPython
 
 class Node(object):
     def __init__(self, data, n_instances_total, depth, domain=None):
+        """
+        the node class is used to construct density trees. Each node stores the data associated to it, the total numner
+        of instances that are in the dataset (the whoile dataset, not the node specific data), its depth and its domain
+        :param data:
+        :param n_instances_total:
+        :param depth:
+        :param domain:
+        :return:
+        """
         self._split_feature_id = None
         self._split_threshold = None
         self._child1 = None
@@ -20,33 +29,71 @@ class Node(object):
             self._domain = domain
 
     def _calculate_domain(self):
+        """
+        This is only used in the root node to calculate the initial domain of the data. Every intermediate/leaf node
+        will then get its domain via __init__ (required to encode splitpositions correctly)
+        :return:
+        """
         domain = np.array([np.min(self._data, axis=0), np.max(self._data, axis=0)]).transpose()
         return domain
 
     @staticmethod
     def _calculate_volume(domain):
-        edge_lengths = np.diff(domain, axis=1)
+        """
+        Calculates the volume spanned by a domain
+        :param domain:
+        :return:
+        """
+        edge_lengths = np.diff(domain.astype("float"), axis=1)
         return np.prod(edge_lengths)
 
     def _calculate_density(self):
+        """
+        Calculates the estimated density of a node using its instance count and domain
+        :return:
+        """
         volume = self._calculate_volume(self._domain)
         density = float(self._n_instances) / float(self._n_instances_total) / float(volume)
         return density
 
     @staticmethod
     def _find_splitpos_middle(value_left, value_right):
-        return float(value_left + value_right) / 2.
+        """
+        simply returs the mean of two values
+        :param value_left:
+        :param value_right:
+        :return:
+        """
+        return np.mean([value_left, value_right])
 
     def _make_leaf(self):
+        """
+        marks whether a node is a leaf
+        :return:
+        """
         self.isLeaf = True
 
     def _check_node_for_constraints(self, node, min_instances_per_node, max_depth):
+        """
+        checks constraints and transforms itself into leaf if constraints are violated
+        :param node:
+        :param min_instances_per_node:
+        :param max_depth:
+        :return:
+        """
         if (node._n_instances < min_instances_per_node) or \
            (node._depth > max_depth):
             node._make_leaf()
         return node
 
     def split(self, min_instances_per_node=10, max_depth=10):
+        """
+        the split function. More comments provided below
+
+        :param min_instances_per_node:
+        :param max_depth:
+        :return:
+        """
         if self.isLeaf:
             return None
 
@@ -58,11 +105,16 @@ class Node(object):
         best_split_domain_left = None
         best_split_domain_right = None
 
+        # iterate over all features
         for j in xrange(self._n_features):
             left_pos = 0
+            # argsort features by value
             idx_sorted_by_feature = np.argsort(self._data[:, j])
 
+            # iterate over all possible splits
             while left_pos < (self._n_instances - 1):
+                # if we have, say [1, 1, 1, 2, 3] as the sorted feature vector, we want the first split tp be between the
+                # 1 and the 2, not between two 1's, therefore increment the left index until value(left)!=value(left+1)
                 while (left_pos < self._n_instances - 1) and \
                       (self._data[idx_sorted_by_feature[left_pos], j] == self._data[idx_sorted_by_feature[left_pos + 1], j]):
                     left_pos += 1
@@ -72,23 +124,34 @@ class Node(object):
                 if right_pos >= self._n_instances:
                     break
 
+                # so far, left_pos and right_pos are only indices in the argsorted array. Now we need the actual
+                # feature values at these positions
                 value_left = self._data[idx_sorted_by_feature[left_pos], j]
                 value_right = self._data[idx_sorted_by_feature[right_pos], j]
+
+                # compute split position as the middle between left and right value
                 splitpos = self._find_splitpos_middle(value_left, value_right)
+
+                # adapt the dimains of the potential child nodes
                 domain_left = np.array(self._domain)
                 domain_right = np.array(self._domain)
                 domain_left[j, 1] = splitpos
                 domain_right[j, 0] = splitpos
-                v_left = self._calculate_volume(domain_left)
-                v_right = self._calculate_volume(domain_right)
-                if (v_left == 0) or (v_right == 0):
+                # calculate the volume of the children using their domain
+                volume_left = self._calculate_volume(domain_left)
+                volume_right = self._calculate_volume(domain_right)
+                if (volume_left == 0) or (volume_right == 0):
+                    # this should never happen. If it does then there is a mistake somewhere
                     IPython.embed()
 
-                proportion_left = float(value_left + 1) / float(self._n_instances_total)
-                proportion_right = float(self._n_instances - value_left - 1) / float(self._n_instances_total)
+                # find how many instances would be left or right when this split is done
+                instances_left = float(left_pos + 1)
+                instances_right = float(self._n_instances - left_pos - 1)
 
-                score = np.square(proportion_left) / v_left + np.square(proportion_right) / v_right
+                # compute the score of the split
+                score = np.square(instances_left) / volume_left + np.square(instances_right) / volume_right
 
+                # update score if it is better than the previous one
                 if score > best_split_score:
                     best_split_feature = j
                     best_split_score = score
@@ -98,13 +161,15 @@ class Node(object):
                     best_split_domain_left = domain_left
                     best_split_domain_right = domain_right
 
+                # go to next possible split position
                 left_pos = right_pos
 
-
+        # if no valid split could be found (for example for [3, 3, 3, 3, 3] no valid split is possible), make leaf
         if best_split_ids_right is None:
             self._make_leaf()
             return None
         else:
+            # if not, create child nodes
             print "\ncreating two child nodes..."
             print "splitpos was", best_split_threshold
             print "feature id", best_split_feature
@@ -124,6 +189,11 @@ class Node(object):
             return self._child1, self._child2
 
     def find_density(self, data_vec):
+        """
+        descends recursively along the nodes until a leaf is reached. then, return density of leaf
+        :param data_vec:
+        :return:
+        """
         if self.isLeaf:
             return self._calculate_density()
         else:
@@ -137,6 +207,14 @@ class DensityEstimationTree(object):
         self._root_node = None
 
     def train(self, x, min_instances_per_node=10, max_depth=10):
+        """
+        creates a stack. new nodes are placed on the stack, in each iteration, one node is taken from the stack and
+        split
+        :param x:
+        :param min_instances_per_node:
+        :param max_depth:
+        :return:
+        """
         self._root_node = Node(x, x.shape[0], 0)
 
         node_stack = []

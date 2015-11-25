@@ -403,8 +403,8 @@ if __name__ == "__main__":
     test_Y = test_Y[(test_Y == 3) | (test_Y == 8)]
 
     # feature selectionr
-    selection_method = "mRMR"
-    dr_train_X, selected_ids = dr(train_X, train_Y.astype("int"), 1, method=selection_method)
+    selection_method = "ICAP"
+    dr_train_X, selected_ids = dr(train_X, train_Y.astype("int"), 2, method=selection_method)
     dr_test_X = test_X[:, selected_ids]
 
     # plot the distribution in feature space to check if feature selection worked
@@ -433,8 +433,9 @@ if __name__ == "__main__":
     # dt = DensityTree()
     # dt.train_tree(dr_train_X, max_depth=15, min_instances_per_node=100)
 
-    dtc = DensityTreeClassifier()
-    dtc.train(dr_train_X, train_Y, max_depth=999, min_instances_per_node=1000)
+    import DensityTree
+    dtc = DensityTree.DensityEstimationTreeClassifier()
+    dtc.train(dr_train_X, train_Y, min_instances_per_node=50, max_depth=999)
     pred_Y = dtc.predict(dr_test_X)
     accur = np.sum(pred_Y == test_Y) / float(len(test_Y))
     print "Accuracy with Density Tree: %f" % accur
