@@ -4,9 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/random_forest/DecisionTree.py" line="7" mnemonic="0" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3311ac86-4017-4a14-9e64-ea6683840ec9" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/random_forest/DecisionTree.py" afterPath="$PROJECT_DIR$/random_forest/DecisionTree.py" />
-    </list>
+    <list default="true" id="3311ac86-4017-4a14-9e64-ea6683840ec9" name="Default" comment="" />
     <ignored path="machine_learning_1.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
