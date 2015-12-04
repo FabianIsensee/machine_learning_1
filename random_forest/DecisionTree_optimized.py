@@ -1,61 +1,66 @@
-__author__ = "Fabian Isensee"
+__author__ = 'fabian'
+
 import numpy as np
 from random import sample
-import IPython
 
-class SplitFunction(object):
-    @staticmethod
-    def split_gini_naive(feature_vec, labels_vec, classes):
-        n_instances = len(feature_vec)
-        best_split_score = float("inf")
-        best_split_threshold = None
-        best_split_indices_left = None
-        best_split_indices_right = None
+def split_gini_new(feature_vec, labels_vec, class_distrib):
+    n_instances = len(feature_vec)
+    best_split_score = float("inf")
+    best_split_threshold = None
+    best_split_indices_left = None
+    best_split_indices_right = None
 
-        idx_sorted_by_feature = np.argsort(feature_vec)
-        left_idx = 0
+    idx_sorted_by_feature = np.argsort(feature_vec)
+    left_idx = 0
+    class_distr_left = np.zeros(len(class_distrib))
+    class_distr_right = np.array(class_distrib)
 
-        while left_idx < (n_instances - 1):
-            right_idx = left_idx + 1
-            while (left_idx < (n_instances - 1)) and \
-                    (feature_vec[idx_sorted_by_feature[left_idx]] ==
-                     feature_vec[idx_sorted_by_feature[right_idx]]):
-                left_idx += 1
-                right_idx += 1
-
-            if right_idx > n_instances - 1:
-                break
-
-            n_idx_left = left_idx + 1
-            n_idx_right = n_instances - n_idx_left
-            p_left = float(n_idx_left) / float(n_instances)
-            p_right = 1. - p_left
-
-            gini_coeff = 0.
-
-            for curr_class in classes:
-                p_k_left = float(np.sum(labels_vec[idx_sorted_by_feature[:(left_idx + 1)]] == curr_class)) / \
-                    float(n_idx_left)
-                p_k_right = float(np.sum(labels_vec[idx_sorted_by_feature[(left_idx + 1):]] == curr_class)) / \
-                    float(n_idx_right)
-                gini_coeff += p_left * p_k_left * (1. - p_k_left) + p_right * p_k_right * (1. - p_k_right)
-
-            if best_split_score > gini_coeff:
-                best_split_score = gini_coeff
-                best_split_threshold = np.mean(feature_vec[idx_sorted_by_feature[[left_idx, right_idx]]])
-                best_split_indices_left = idx_sorted_by_feature[:(left_idx + 1)]
-                best_split_indices_right = idx_sorted_by_feature[(left_idx + 1):]
-
+    while left_idx < (n_instances - 1):
+        class_distr_left[labels_vec[idx_sorted_by_feature[left_idx]]] += 1
+        class_distr_right[labels_vec[idx_sorted_by_feature[left_idx]]] -= 1
+        right_idx = left_idx + 1
+        while (left_idx < (n_instances - 1)) and \
+                (feature_vec[idx_sorted_by_feature[left_idx]] ==
+                 feature_vec[idx_sorted_by_feature[right_idx]]):
             left_idx += 1
+            right_idx += 1
+            class_distr_left[labels_vec[idx_sorted_by_feature[left_idx]]] += 1
+            class_distr_right[labels_vec[idx_sorted_by_feature[left_idx]]] -= 1
 
-        return best_split_score, best_split_threshold, best_split_indices_left, best_split_indices_right
+        if right_idx > n_instances - 1:
+            break
 
+        n_idx_left = left_idx + 1
+        n_idx_right = n_instances - n_idx_left
+        p_left = float(n_idx_left) / float(n_instances)
+        p_right = 1. - p_left
+
+        gini_coeff = 0.
+
+        for k in xrange(len(class_distrib)):
+            p_k_left = float(class_distr_left[k]) / float(n_idx_left)
+            p_k_right = float(class_distr_right[k]) / float(n_idx_right)
+            gini_coeff += p_left * p_k_left * (1. - p_k_left) + p_right * p_k_right * (1. - p_k_right)
+
+        if gini_coeff < 0:
+            import IPython
+            IPython.embed()
+
+        if best_split_score > gini_coeff:
+            best_split_score = gini_coeff
+            best_split_threshold = np.mean(feature_vec[idx_sorted_by_feature[[left_idx, right_idx]]])
+            best_split_indices_left = idx_sorted_by_feature[:(left_idx + 1)]
+            best_split_indices_right = idx_sorted_by_feature[(left_idx + 1):]
+
+        left_idx += 1
+
+    return best_split_score, best_split_threshold, best_split_indices_left, best_split_indices_right
 
 class DecisionTreeNode(object):
-    def __init__(self, data, labels, use_features = "all", depth = 0):
+    def __init__(self, data, labels, all_classes, use_features = "all", depth = 0):
         self.data = data
         self.labels = labels
-        self._classes = np.unique(self.labels)
+        self._classes = all_classes
 
         assert self.data.shape[0] == len(self.labels), "data and labels must have the same number of instances:\n" \
                                                              "data: %d\n" \
@@ -69,6 +74,10 @@ class DecisionTreeNode(object):
         self._n_instances, self._n_features = self.data.shape
 
         self._depth = depth
+
+        self.class_distrib = np.zeros(len(self._classes))
+        for i, k in enumerate(self._classes):
+            self.class_distrib[i] = np.sum(self.labels == k)
 
         assert use_features in ["all", "sqrt"], "use_features must be either \"all\" or \"sqrt\""
         if use_features == "all":
@@ -130,11 +139,10 @@ class DecisionTreeNode(object):
         best_split_threshold = None
         best_split_indices_left = None
         best_split_indices_right = None
-        splitter = SplitFunction()
 
         for j in features_for_split:
             curr_best_split_score, curr_best_split_threshold, curr_best_split_indices_left, curr_best_split_indices_right = \
-                splitter.split_gini_naive(self.data[:, j], self.labels, self._classes)
+                split_gini_new(self.data[:, j], self.labels, self.class_distrib)
 
             if best_split_score > curr_best_split_score:
                 best_split_score = curr_best_split_score
@@ -155,13 +163,20 @@ class DecisionTreeNode(object):
 
         self._child_left = DecisionTreeNode(self.data[best_split_indices_left, :],
                                             self.labels[best_split_indices_left],
+                                            self._classes,
                                             use_features=self._use_features,
                                             depth=self._depth + 1)
 
         self._child_right = DecisionTreeNode(self.data[best_split_indices_right, :],
                                              self.labels[best_split_indices_right],
+                                             self._classes,
                                              use_features=self._use_features,
                                              depth=self._depth + 1)
+        '''print "\nbest split feature: ", best_split_feature
+        print "best gini coeff: ", best_split_score
+        print "threshold: ", best_split_threshold
+        print "n_left: ", len(best_split_indices_left)
+        print "n_right: ", len(best_split_indices_right)'''
 
         returned_children = []
         for child in [self._child_left, self._child_right]:
@@ -185,7 +200,7 @@ class DecisionTree(object):
         for i in xrange(y.shape[0]):
             y[i] = lut[y[i]]
 
-        self._root_node = DecisionTreeNode(x, y, self._use_features, 0)
+        self._root_node = DecisionTreeNode(x, y, np.unique(y), self._use_features, 0)
         node_stack = [self._root_node]
 
         while len(node_stack) > 0:
@@ -206,21 +221,3 @@ class DecisionTree(object):
 
         return pred_y
 
-
-if __name__ == "__main__":
-    from sklearn import datasets, cross_validation
-    import os
-    iris = datasets.load_iris()
-
-    start_time = os.times()[4]
-    train_x, test_x, train_y, test_y = cross_validation.train_test_split(iris.data, iris.target)
-
-    dt = DecisionTree()
-    print "start training decision tree. timestamp: %f" % (os.times()[4]-start_time)
-    dt.train(train_x, train_y)
-
-    print "start predicting decision tree. timestamp: %f" % (os.times()[4]-start_time)
-    pred_y = dt.predict(test_x)
-    print "predicting done. timestamp: %f" % (os.times()[4]-start_time)
-    accur = np.sum(pred_y == test_y) / float(len(test_y))
-    print "accuracy: ", accur
