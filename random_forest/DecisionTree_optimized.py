@@ -75,7 +75,7 @@ class DecisionTreeNode(object):
 
         self._depth = depth
 
-        self.class_distrib = np.zeros(len(self._classes))
+        self.class_distrib = np.zeros(len(self._classes), dtype=np.int32)
         for i, k in enumerate(self._classes):
             self.class_distrib[i] = np.sum(self.labels == k)
 
@@ -200,7 +200,7 @@ class DecisionTree(object):
         for i in xrange(y.shape[0]):
             y[i] = lut[y[i]]
 
-        self._root_node = DecisionTreeNode(x, y, np.unique(y), self._use_features, 0)
+        self._root_node = DecisionTreeNode(x.astype(np.float32), y.astype(np.int32), np.unique(y).astype(np.int32), self._use_features, 0)
         node_stack = [self._root_node]
 
         while len(node_stack) > 0:

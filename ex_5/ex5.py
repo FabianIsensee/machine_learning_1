@@ -77,16 +77,16 @@ if __name__ == "__main__":
     image_flattened = image_y.flatten()
     c = np.array([-77,-33,-12, -3,21,42,50,86]).astype("float")
 
-    a = makeA_jens((77,77), image_alphas)
+    a = makeA_jens((77,77), image_alphas).transpose()
 
     import matplotlib.pyplot as plt
     plt.imshow(a.transpose(), cmap="gray", interpolation="none")
     plt.close()
     # plt.show()
-    IPython.embed()
     a_sparse = dok_matrix(a)
-    res = lsqr(a_sparse.transpose(), image_y)
+    res = lsqr(a_sparse, image_y)
     res_new = res.reshape((77, 77))
     plt.imshow(res_new, cmap="gray")
     plt.show()
+    IPython.embed()
 
