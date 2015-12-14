@@ -6,6 +6,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3311ac86-4017-4a14-9e64-ea6683840ec9" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/random_forest_regressor/RandomForestClassifier.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/random_forest_regressor/RegressionTree.py" afterPath="$PROJECT_DIR$/random_forest_regressor/RegressionTree.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="machine_learning_1.iws" />
@@ -27,14 +29,27 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="DecisionTree.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="DecisionTree.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/random_forest/DecisionTree.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.39143968">
-              <caret line="187" column="0" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="53" column="31" selection-start-line="53" selection-start-column="31" selection-end-line="53" selection-end-column="31" />
               <folding>
                 <element signature="e#30#48#0" expanded="true" />
+                <element signature="e#206#2027#0" expanded="false" />
+                <element signature="e#2066#6939#0" expanded="false" />
+                <element signature="e#6973#8062#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RandomForestClassifier.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/random_forest/RandomForestClassifier.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="19" column="26" selection-start-line="19" selection-start-column="26" selection-end-line="19" selection-end-column="26" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -75,12 +90,27 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="RegressionTree.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="RegressionTree.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/random_forest_regressor/RegressionTree.py">
           <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.33971292">
+              <caret line="90" column="21" selection-start-line="90" selection-start-column="21" selection-end-line="90" selection-end-column="21" />
+              <folding>
+                <element signature="e#22#40#0" expanded="true" />
+                <element signature="e#1676#1892#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RandomForestClassifier.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/random_forest_regressor/RandomForestClassifier.py">
+          <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="20" column="23" selection-start-line="20" selection-start-column="23" selection-end-line="20" selection-end-column="23" />
-              <folding />
+              <caret line="59" column="41" selection-start-line="59" selection-start-column="41" selection-end-line="59" selection-end-column="41" />
+              <folding>
+                <element signature="e#22#63#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -146,6 +176,7 @@
         <option value="$PROJECT_DIR$/random_forest/split_gini_cython.pyx" />
         <option value="$PROJECT_DIR$/random_forest/DecisionTree_optimized.py" />
         <option value="$PROJECT_DIR$/ex_6/ex6.py" />
+        <option value="$PROJECT_DIR$/random_forest_regressor/RandomForestClassifier.py" />
         <option value="$PROJECT_DIR$/random_forest_regressor/RegressionTree.py" />
       </list>
     </option>
@@ -453,16 +484,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/random_forest/test_split.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="4" column="29" selection-start-line="4" selection-start-column="29" selection-end-line="4" selection-end-column="29" />
-          <folding>
-            <element signature="e#23#47#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/random_forest/setup_split_gini.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -479,6 +500,9 @@
           <caret line="187" column="0" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
           <folding>
             <element signature="e#30#48#0" expanded="true" />
+            <element signature="e#206#2027#0" expanded="false" />
+            <element signature="e#2066#6939#0" expanded="false" />
+            <element signature="e#6973#8062#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -547,6 +571,9 @@
           <caret line="51" column="0" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
           <folding>
             <element signature="e#30#48#0" expanded="true" />
+            <element signature="e#206#2027#0" expanded="false" />
+            <element signature="e#2066#6939#0" expanded="false" />
+            <element signature="e#6973#8062#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -764,13 +791,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/random_forest/RandomForestClassifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6298553">
-          <caret line="61" column="0" selection-start-line="45" selection-start-column="0" selection-end-line="61" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ex_5/ex5.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -841,20 +861,44 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/random_forest_regressor/RegressionTree.py">
+    <entry file="file://$PROJECT_DIR$/random_forest/DecisionTree.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="20" column="23" selection-start-line="20" selection-start-column="23" selection-end-line="20" selection-end-column="23" />
+          <caret line="53" column="31" selection-start-line="53" selection-start-column="31" selection-end-line="53" selection-end-column="31" />
+          <folding>
+            <element signature="e#30#48#0" expanded="true" />
+            <element signature="e#206#2027#0" expanded="false" />
+            <element signature="e#2066#6939#0" expanded="false" />
+            <element signature="e#6973#8062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/random_forest/RandomForestClassifier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="19" column="26" selection-start-line="19" selection-start-column="26" selection-end-line="19" selection-end-column="26" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/random_forest/DecisionTree.py">
+    <entry file="file://$PROJECT_DIR$/random_forest_regressor/RandomForestClassifier.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.39143968">
-          <caret line="187" column="0" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="59" column="41" selection-start-line="59" selection-start-column="41" selection-end-line="59" selection-end-column="41" />
           <folding>
-            <element signature="e#30#48#0" expanded="true" />
+            <element signature="e#22#63#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/random_forest_regressor/RegressionTree.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33971292">
+          <caret line="90" column="21" selection-start-line="90" selection-start-column="21" selection-end-line="90" selection-end-column="21" />
+          <folding>
+            <element signature="e#22#40#0" expanded="true" />
+            <element signature="e#1676#1892#0" expanded="false" />
           </folding>
         </state>
       </provider>
