@@ -2,6 +2,8 @@ __author__ = 'fabian'
 
 import numpy as np
 from random import sample
+import split_gini_cython
+import IPython
 
 def split_gini_new(feature_vec, labels_vec, class_distrib):
     n_instances = len(feature_vec)
@@ -57,10 +59,10 @@ def split_gini_new(feature_vec, labels_vec, class_distrib):
     return best_split_score, best_split_threshold, best_split_indices_left, best_split_indices_right
 
 class DecisionTreeNode(object):
-    def __init__(self, data, labels, all_classes, use_features = "all", depth = 0):
+    def __init__(self, data, labels, classes, use_features = "all", depth = 0):
         self.data = data
         self.labels = labels
-        self._classes = all_classes
+        self._classes = classes
 
         assert self.data.shape[0] == len(self.labels), "data and labels must have the same number of instances:\n" \
                                                              "data: %d\n" \
@@ -119,7 +121,7 @@ class DecisionTreeNode(object):
                 return self._child_right.find_prediction(data_vec)
 
     def check_constraints_violated(self, max_depth=10, min_instances=10):
-        if len(self._classes) == 1:
+        if len(np.unique(self.labels)) == 1:
             self._make_leaf()
             return True
         if (min_instances is not None) and (self._n_instances < min_instances):
@@ -131,32 +133,36 @@ class DecisionTreeNode(object):
         return False
 
     def split_node(self, max_depth=10, min_instances=10):
+        # print "splitting node..."
+        # print "depth ", self._depth
+        # print "n_instances ", self.data.shape[0]
+
         features_for_split = self._get_features_for_split()
 
         # gini coefficient must be minimized by the split
         best_split_score = float("inf")
         best_split_feature = None
         best_split_threshold = None
-        best_split_indices_left = None
-        best_split_indices_right = None
 
         for j in features_for_split:
-            curr_best_split_score, curr_best_split_threshold, curr_best_split_indices_left, curr_best_split_indices_right = \
-                split_gini_new(self.data[:, j], self.labels, self.class_distrib)
+            curr_best_split_score, curr_best_split_threshold = \
+                split_gini_cython.split_gini(self.data[:, j], self.labels, self._classes, self.class_distrib)
 
             if best_split_score > curr_best_split_score:
                 best_split_score = curr_best_split_score
                 best_split_threshold = curr_best_split_threshold
                 best_split_feature = j
-                best_split_indices_left = curr_best_split_indices_left
-                best_split_indices_right = curr_best_split_indices_right
 
-
-        # this can rarely happen if the only feature where the feature values differ is not selected. then there is no
-        # valid split that can be found
         if best_split_feature is None:
             self._make_leaf()
             return []
+
+        best_split_indices_left = np.where(self.data[:, best_split_feature] <= best_split_threshold)[0]
+        best_split_indices_right = np.where(self.data[:, best_split_feature] > best_split_threshold)[0]
+        if (len(best_split_indices_right) == 0) or (len(best_split_indices_left) == 0):
+            self._make_leaf()
+            return []
+
 
         self._threshold = best_split_threshold
         self._splitFeatureID = best_split_feature
@@ -183,6 +189,9 @@ class DecisionTreeNode(object):
             if not child.check_constraints_violated(max_depth, min_instances):
                 returned_children.append(child)
 
+        # print "number if children returned: ", len(returned_children)
+        # print "am I now a leaf? ", self.isLeaf
+        # print "\n"
         return returned_children
 
 class DecisionTree(object):

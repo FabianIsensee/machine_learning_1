@@ -2,7 +2,7 @@ __author__ = 'fabian'
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics.pairwise as pwd
-from scipy.sparse import dok_matrix, linalg, csc_matrix, coo_matrix, csr_matrix
+from scipy.sparse import linalg, csc_matrix
 from scipy.spatial import cKDTree
 import IPython
 
